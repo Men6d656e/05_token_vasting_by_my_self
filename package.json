@@ -1,0 +1,13 @@
+{
+  "name": "05_token_vasting_by_my_self",
+  "version": "1.0.0",
+  "description": "Production-Grade Token Vasting Protocol Workspace",
+  "license": "ISC",
+  "main": "app.js",
+  "scripts": {
+    "dev": "serve ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.6"
+  }
+}

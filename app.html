@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Vesting | Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js" type="application/javascript"></script>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="logo-text">⏳ Antigravity Protocol</a>
+        <button id="connectWallet" class="btn">Connect Wallet</button>
+    </header>
+
+    <main class="dashboard-container">
+        
+        <div id="welcome-message" style="text-align: center; padding: 4rem 1rem;">
+            <h2>System Standby</h2>
+            <p>Please connect your Web3 wallet (MetaMask) to synchronize with the blockchain and access the vesting control panel.</p>
+        </div>
+
+        <div id="dashboard" class="hidden">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Live Subsystem Nodes</h2>
+                    <p>Connected directly to the decentralized network.</p>
+                </div>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Network Target</span>
+                        <span class="info-value" id="contractNet">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Token Contract Address</span>
+                        <span class="info-value" id="tokenAddr">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Vesting Contract Address</span>
+                        <span class="info-value" id="vestingAddr">--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Admin Panel (Only visible to Owner) -->
+            <div id="admin-panel" class="panel hidden" style="margin-top: 2rem; border-color: var(--accent-purple);">
+                <div class="panel-header">
+                    <h2>👑 Administrator Controls</h2>
+                    <p>Create new linear vesting schedules for beneficiaries.</p>
+                </div>
+                <form id="createScheduleForm" class="vesting-form">
+                    <div class="form-group">
+                        <label>Beneficiary Address</label>
+                        <input type="text" id="beneficiaryInput" placeholder="0x..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Amount (VTT)</label>
+                        <input type="number" id="amountInput" placeholder="1000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Start Time (Unix Timestamp)</label>
+                        <input type="number" id="startInput" placeholder="e.g. 1718000000" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Cliff Duration (Seconds)</label>
+                        <input type="number" id="cliffInput" placeholder="e.g. 86400 (1 Day)" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Total Duration (Seconds)</label>
+                        <input type="number" id="durationInput" placeholder="e.g. 2592000 (30 Days)" required>
+                    </div>
+                    <button type="submit" class="btn" id="createBtn" style="margin-top: 1rem; width: 100%;">Deploy Schedule</button>
+                </form>
+            </div>
+
+            <!-- Beneficiary Panel -->
+            <div class="panel" style="margin-top: 2rem;">
+                <div class="panel-header">
+                    <h2>Vesting Operations</h2>
+                    <p>Manage allocations and claim unlocked tokens.</p>
+                </div>
+                
+                <div id="schedules-container" class="schedules-grid">
+                    <!-- Schedules will be dynamically injected here -->
+                    <div style="text-align: center; padding: 2rem; border: 1px dashed var(--card-border); border-radius: 0.5rem; color: var(--text-secondary); width: 100%;">
+                        <em>Scanning blockchain for your active schedules...</em>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="custom-notification" class="notification">
+        <span style="font-size: 1.5rem;" id="notification-icon">⚠️</span>
+        <span id="notification-text">Message goes here</span>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
