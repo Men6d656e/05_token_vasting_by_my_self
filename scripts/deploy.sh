@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eo pipefail
+set -e
 
 NETWORK=${1:-anvil}
 LOG_DIR="./contracts/logs"
@@ -9,27 +9,50 @@ echo "⚙️ Compiling contracts..."
 cd contracts && forge build && cd ..
 
 if [ "$NETWORK" = "sepolia" ]; then
-    echo "🌐 Deploying to Sepolia Testnet via Alchemy..."
+    echo "🌐 Deploying to Sepolia Testnet..."
     source .env
-    cd contracts && forge script script/DeployVesting.s.sol:DeployVesting \
+    
+    if [ -z "$ETHERSCAN_API_KEY" ]; then
+        echo "❌ Error: ETHERSCAN_API_KEY is not set in .env"
+        exit 1
+    fi
+
+    # Prompt for private key securely (no echo) and pass via --private-key
+    echo "Enter your Sepolia wallet private key:"
+    read -s PRIVATE_KEY
+    echo
+    cd contracts
+    forge script script/DeployVesting.s.sol:DeployVesting \
         --rpc-url "$SEPOLIA_RPC_URL" \
         --private-key "$PRIVATE_KEY" \
-        --broadcast --verify \
-        | tee logs/sepolia_deploy.log && cd ..
+        --broadcast \
+        --verify \
+        --etherscan-api-key "$ETHERSCAN_API_KEY"
+    cd ..
+    unset PRIVATE_KEY
+    
+    echo "Saving tracking metadata..."
+    CHAIN_ID="11155111"
+    cp contracts/broadcast/DeployVesting.s.sol/11155111/run-latest.json "$LOG_DIR/sepolia_deploy.log" || true
     LOG_FILE="$LOG_DIR/sepolia_deploy.log"
 else
     echo "🛑 Deploying to Local Anvil Chain..."
-    cd contracts && forge script script/DeployVesting.s.sol:DeployVesting \
+    cd contracts
+    forge script script/DeployVesting.s.sol:DeployVesting \
         --rpc-url "http://127.0.0.1:8545" \
         --private-key "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" \
-        --broadcast \
-        | tee logs/anvil_deploy.log && cd ..
+        --broadcast
+    cd ..
+    
+    CHAIN_ID="31337"
+    cp contracts/broadcast/DeployVesting.s.sol/31337/run-latest.json "$LOG_DIR/anvil_deploy.log" || true
     LOG_FILE="$LOG_DIR/anvil_deploy.log"
 fi
 
 echo "🔍 Processing deployment telemetry logs..."
-TOKEN_ADDRESS=$(grep -E "Deployed MockToken at:" "$LOG_FILE" | awk '{print $4}' || true)
-VESTING_ADDRESS=$(grep -E "Deployed TokenVesting at:" "$LOG_FILE" | awk '{print $4}' || true)
+BROADCAST_DIR="contracts/broadcast/DeployVesting.s.sol/$CHAIN_ID"
+TOKEN_ADDRESS=$(jq -r '.transactions[] | select(.contractName=="MockToken") | .contractAddress' "$BROADCAST_DIR/run-latest.json" 2>/dev/null || true)
+VESTING_ADDRESS=$(jq -r '.transactions[] | select(.contractName=="TokenVesting") | .contractAddress' "$BROADCAST_DIR/run-latest.json" 2>/dev/null || true)
 
 echo "✅ Extracted Token: $TOKEN_ADDRESS"
 echo "✅ Extracted Vesting: $VESTING_ADDRESS"

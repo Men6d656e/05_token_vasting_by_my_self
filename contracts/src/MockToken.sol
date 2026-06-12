@@ -8,7 +8,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  * @dev Simple ERC20 Mock Token for local testing and demonstration purposes.
  * Automatically mints 1,000,000 tokens to the deployer address upon creation.
  */
-contract MokeToken is ERC20 {
+contract MockToken is ERC20 {
     /**
      * @notice Initializes the Mock Token with a name ("Vesting Test Token") and symbol ("VTT")
      */

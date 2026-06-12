@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 -include .env
 
 .PHONY: all setup local-node deploy-anvil deploy-sepolia serve clean

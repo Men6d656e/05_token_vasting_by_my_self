@@ -1,8 +1,8 @@
 // Auto-generated via deployment pipeline script. Do not modify directly.
 export const CONTRACT_CONFIG = {
-    network: "anvil",
-    tokenAddress: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-    vestingAddress: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    network: "sepolia",
+    tokenAddress: "0x7533551216675bf80131b1b3601c29545ff6770d",
+    vestingAddress: "0x40c2b3fcdf848382b56619a4f24e72497e9cb265",
     tokenAbi: [
   {
     "type": "constructor",

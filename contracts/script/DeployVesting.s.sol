@@ -14,13 +14,11 @@ contract DeployVesting is Script {
     /**
      * @notice Main deployment execution function
      * @dev Deploys the MockToken first, and uses its address to initialize TokenVesting
+     * The deployer private key is provided via the --private-key CLI flag.
      */
     function run() external {
-        // Retrieve private key from .env, falling back to Anvil's default account zero
-        uint256 deployerPrivateKey = vm.envOr("PRIVATE_KEY", uint256(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80));
-        
-        // Begin broadcasting transactions
-        vm.startBroadcast(deployerPrivateKey);
+        // Begin broadcasting transactions using the CLI-provided private key
+        vm.startBroadcast();
 
         // 1. Deploy the Mock ERC20 Token
         MockToken token = new MockToken();

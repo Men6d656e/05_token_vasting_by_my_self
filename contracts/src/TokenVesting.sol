@@ -1,10 +1,10 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title TokenVesting
@@ -39,7 +39,7 @@ contract TokenVesting is Ownable, ReentrancyGuard {
     error CliffGreaterThanDuration();
     error ScheduleNotFound();
     error CliffNotReached();
-    error NReleasableTokens();
+    error NoReleasableTokens();
     error ZeroAddress();
     error ZeroAmount();
     error InsufficientContractBalance();
@@ -51,11 +51,7 @@ contract TokenVesting is Ownable, ReentrancyGuard {
      * @param beneficiary Address of the beneficiary
      * @param amount Total amount of tokens to be vested
      */
-    event VestingScheduleCreated(
-        bytes32 indexed scheduleId,
-        address indexed beneficary,
-        uint256 amount
-    );
+    event VestingScheduleCreated(bytes32 indexed scheduleId, address indexed beneficiary, uint256 amount);
 
     /**
      * @notice Emitted when tokens are claimed by a beneficiary
@@ -63,15 +59,11 @@ contract TokenVesting is Ownable, ReentrancyGuard {
      * @param beneficiary Address of the beneficiary
      * @param amount Amount of tokens claimed
      */
-    event TokensClaimed(
-        bytes32 indexed scheduleId,
-        address indexed beneficiary,
-        uint256 amount
-    );
+    event TokensClaimed(bytes32 indexed scheduleId, address indexed beneficiary, uint256 amount);
 
     /**
      * @notice Initializes the vesting contract
-     * @param _token Address of the ERC20 token to vast
+     * @param _token Address of the ERC20 token to vest
      */
     constructor(address _token) Ownable(msg.sender) {
         if (_token == address(0)) revert ZeroAddress();
@@ -88,7 +80,7 @@ contract TokenVesting is Ownable, ReentrancyGuard {
      * @param _totalAmount Total amount of tokens to be vested
      */
     function createVestingSchedule(
-        address __beneficiary,
+        address _beneficiary,
         uint256 _start,
         uint256 _cliffDuration,
         uint256 _duration,
@@ -109,7 +101,7 @@ contract TokenVesting is Ownable, ReentrancyGuard {
             mstore(add(ptr, 0x40), length)
             scheduleId := keccak256(ptr, 0x60)
         }
-
+        
         vestingSchedules[scheduleId] = VestingSchedule({
             beneficiary: _beneficiary,
             start: _start,
@@ -134,19 +126,18 @@ contract TokenVesting is Ownable, ReentrancyGuard {
      */
     function claimTokens(bytes32 _scheduleId) external nonReentrant {
         VestingSchedule storage schedule = vestingSchedules[_scheduleId];
-
+        
         if (schedule.beneficiary == address(0)) revert ScheduleNotFound();
         if (block.timestamp < schedule.cliff) revert CliffNotReached();
 
         uint256 releasable = calculateReleasableAmount(schedule);
         if (releasable == 0) revert NoReleasableTokens();
 
-        if (VESTING_TOKEN.balanceOf(address(this)) < releasable)
-            revert InsufficientContractBalance();
+        if (VESTING_TOKEN.balanceOf(address(this)) < releasable) revert InsufficientContractBalance();
 
         // Update state before external call (CEI pattern enforced)
         schedule.releasedAmount += releasable;
-
+        
         // Execute transfer
         VESTING_TOKEN.safeTransfer(schedule.beneficiary, releasable);
 
@@ -158,9 +149,7 @@ contract TokenVesting is Ownable, ReentrancyGuard {
      * @param schedule The VestingSchedule struct in memory
      * @return The amount of tokens that can be currently released
      */
-    function calculateReleasableAmount(
-        VestingSchedule memory schedule
-    ) public view returns (uint256) {
+    function calculateReleasableAmount(VestingSchedule memory schedule) public view returns (uint256) {
         if (block.timestamp < schedule.cliff) {
             return 0;
         } else if (block.timestamp >= schedule.start + schedule.duration) {
@@ -169,8 +158,7 @@ contract TokenVesting is Ownable, ReentrancyGuard {
         } else {
             // Linear vesting calculation
             uint256 timeElapsed = block.timestamp - schedule.start;
-            uint256 vestedAmount = (schedule.totalAmount * timeElapsed) /
-                schedule.duration;
+            uint256 vestedAmount = (schedule.totalAmount * timeElapsed) / schedule.duration;
             return vestedAmount - schedule.releasedAmount;
         }
     }
@@ -180,9 +168,7 @@ contract TokenVesting is Ownable, ReentrancyGuard {
      * @param _scheduleId Identifier of the vesting schedule
      * @return The VestingSchedule struct
      */
-    function getVestingSchedule(
-        bytes32 _scheduleId
-    ) external view returns (VestingSchedule memory) {
+    function getVestingSchedule(bytes32 _scheduleId) external view returns (VestingSchedule memory) {
         return vestingSchedules[_scheduleId];
     }
 
